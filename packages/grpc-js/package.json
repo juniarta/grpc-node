@@ -1,6 +1,6 @@
 {
   "name": "@grpc/grpc-js",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "gRPC Library for Node - pure JS implementation",
   "homepage": "https://grpc.io/",
   "repository": "https://github.com/grpc/grpc-node/tree/master/packages/grpc-js",
@@ -21,7 +21,7 @@
     "clang-format": "^1.0.55",
     "gts": "^0.5.1",
     "lodash": "^4.17.4",
-    "typescript": "~2.7.0"
+    "typescript": "~3.3.3333"
   },
   "contributors": [
     {
@@ -45,6 +45,7 @@
     "semver": "^5.5.0"
   },
   "files": [
-    "build/src/*.{js,d.ts}"
+    "build/src/*.{js,d.ts}",
+    "LICENSE"
   ]
 }
