@@ -1,10 +1,27 @@
-import {EventEmitter} from 'events';
+/*
+ * Copyright 2019 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+import { EventEmitter } from 'events';
 import * as http2 from 'http2';
 import * as url from 'url';
 
-import {Call, Http2CallStream} from './call-stream';
-import {ChannelOptions} from './channel-options';
-import {Metadata} from './metadata';
+import { Call, Http2CallStream } from './call-stream';
+import { ChannelOptions } from './channel-options';
+import { Metadata } from './metadata';
 
 const {
   HTTP2_HEADER_AUTHORITY,
@@ -12,7 +29,7 @@ const {
   HTTP2_HEADER_METHOD,
   HTTP2_HEADER_PATH,
   HTTP2_HEADER_TE,
-  HTTP2_HEADER_USER_AGENT
+  HTTP2_HEADER_USER_AGENT,
 } = http2.constants;
 
 /* setInterval and setTimeout only accept signed 32 bit integers. JS doesn't
@@ -42,8 +59,11 @@ export class Http2SubChannel extends EventEmitter implements SubChannel {
   private keepaliveTimeoutId: NodeJS.Timer;
 
   constructor(
-      target: url.URL, connectionOptions: http2.SecureClientSessionOptions,
-      userAgent: string, channelArgs: Partial<ChannelOptions>) {
+    target: url.URL,
+    connectionOptions: http2.SecureClientSessionOptions,
+    userAgent: string,
+    channelArgs: Partial<ChannelOptions>
+  ) {
     super();
     this.session = http2.connect(target, connectionOptions);
     this.session.unref();
@@ -92,9 +112,11 @@ export class Http2SubChannel extends EventEmitter implements SubChannel {
     this.keepaliveTimeoutId = setTimeout(() => {
       this.emit('close');
     }, this.keepaliveTimeoutMs);
-    this.session.ping((err: Error|null, duration: number, payload: Buffer) => {
-      clearTimeout(this.keepaliveTimeoutId);
-    });
+    this.session.ping(
+      (err: Error | null, duration: number, payload: Buffer) => {
+        clearTimeout(this.keepaliveTimeoutId);
+      }
+    );
   }
 
   /* TODO(murgatroid99): refactor subchannels so that keepalives can be handled

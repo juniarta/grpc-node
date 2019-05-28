@@ -1,12 +1,30 @@
-import {Metadata} from './metadata';
+/*
+ * Copyright 2019 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-export type CallMetadataOptions = {
+import { Metadata } from './metadata';
+
+export interface CallMetadataOptions {
   service_url: string;
-};
+}
 
-export type CallMetadataGenerator =
-    (options: CallMetadataOptions,
-     cb: (err: Error|null, metadata?: Metadata) => void) => void;
+export type CallMetadataGenerator = (
+  options: CallMetadataOptions,
+  cb: (err: Error | null, metadata?: Metadata) => void
+) => void;
 
 /**
  * A class that represents a generic method of adding authentication-related
@@ -33,8 +51,9 @@ export abstract class CallCredentials {
    * generates a Metadata object based on these options, which is passed back
    * to the caller via a supplied (err, metadata) callback.
    */
-  static createFromMetadataGenerator(metadataGenerator: CallMetadataGenerator):
-      CallCredentials {
+  static createFromMetadataGenerator(
+    metadataGenerator: CallMetadataGenerator
+  ): CallCredentials {
     return new SingleCallCredentials(metadataGenerator);
   }
 
@@ -51,7 +70,8 @@ class ComposedCallCredentials extends CallCredentials {
   async generateMetadata(options: CallMetadataOptions): Promise<Metadata> {
     const base: Metadata = new Metadata();
     const generated: Metadata[] = await Promise.all(
-        this.creds.map((cred) => cred.generateMetadata(options)));
+      this.creds.map(cred => cred.generateMetadata(options))
+    );
     for (const gen of generated) {
       base.merge(gen);
     }

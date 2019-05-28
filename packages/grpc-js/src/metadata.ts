@@ -1,8 +1,25 @@
+/*
+ * Copyright 2019 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 import * as http2 from 'http2';
 const LEGAL_KEY_REGEX = /^[0-9a-z_.-]+$/;
 const LEGAL_NON_BINARY_VALUE_REGEX = /^[ -~]*$/;
 
-export type MetadataValue = string|Buffer;
+export type MetadataValue = string | Buffer;
 export type MetadataObject = Map<string, MetadataValue[]>;
 
 function isLegalKey(key: string): boolean {
@@ -28,17 +45,18 @@ function validate(key: string, value?: MetadataValue): void {
   if (value != null) {
     if (isBinaryKey(key)) {
       if (!(value instanceof Buffer)) {
-        throw new Error('keys that end with \'-bin\' must have Buffer values');
+        throw new Error("keys that end with '-bin' must have Buffer values");
       }
     } else {
       if (value instanceof Buffer) {
         throw new Error(
-            'keys that don\'t end with \'-bin\' must have String values');
+          "keys that don't end with '-bin' must have String values"
+        );
       }
       if (!isLegalNonBinaryValue(value)) {
         throw new Error(
-            'Metadata string value "' + value +
-            '" contains illegal characters');
+          'Metadata string value "' + value + '" contains illegal characters'
+        );
       }
     }
   }
@@ -74,7 +92,9 @@ export class Metadata {
     key = normalizeKey(key);
     validate(key, value);
 
-    const existingValue: MetadataValue[]|undefined = this.internalRepr.get(key);
+    const existingValue: MetadataValue[] | undefined = this.internalRepr.get(
+      key
+    );
 
     if (existingValue === undefined) {
       this.internalRepr.set(key, [value]);
@@ -109,8 +129,8 @@ export class Metadata {
    * This reflects the most common way that people will want to see metadata.
    * @return A key/value mapping of the metadata.
    */
-  getMap(): {[key: string]: MetadataValue} {
-    const result: {[key: string]: MetadataValue} = {};
+  getMap(): { [key: string]: MetadataValue } {
+    const result: { [key: string]: MetadataValue } = {};
 
     this.internalRepr.forEach((values, key) => {
       if (values.length > 0) {
@@ -153,8 +173,9 @@ export class Metadata {
    */
   merge(other: Metadata): void {
     other.internalRepr.forEach((values, key) => {
-      const mergedValue: MetadataValue[] =
-          (this.internalRepr.get(key) || []).concat(values);
+      const mergedValue: MetadataValue[] = (
+        this.internalRepr.get(key) || []
+      ).concat(values);
 
       this.internalRepr.set(key, mergedValue);
     });
@@ -169,7 +190,7 @@ export class Metadata {
     this.internalRepr.forEach((values, key) => {
       // We assume that the user's interaction with this object is limited to
       // through its public API (i.e. keys and values are already validated).
-      result[key] = values.map((value) => {
+      result[key] = values.map(value => {
         if (value instanceof Buffer) {
           return value.toString('base64');
         } else {
@@ -192,7 +213,7 @@ export class Metadata {
    */
   static fromHttp2Headers(headers: http2.IncomingHttpHeaders): Metadata {
     const result = new Metadata();
-    Object.keys(headers).forEach((key) => {
+    Object.keys(headers).forEach(key => {
       // Reserved headers (beginning with `:`) are not valid keys.
       if (key.charAt(0) === ':') {
         return;
@@ -202,7 +223,7 @@ export class Metadata {
 
       if (isBinaryKey(key)) {
         if (Array.isArray(values)) {
-          values.forEach((value) => {
+          values.forEach(value => {
             result.add(key, Buffer.from(value, 'base64'));
           });
         } else if (values !== undefined) {
@@ -212,7 +233,7 @@ export class Metadata {
         }
       } else {
         if (Array.isArray(values)) {
-          values.forEach((value) => {
+          values.forEach(value => {
             result.add(key, value);
           });
         } else if (values !== undefined) {

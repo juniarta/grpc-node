@@ -1,6 +1,23 @@
-import {ConnectionOptions, createSecureContext, PeerCertificate} from 'tls';
+/*
+ * Copyright 2019 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-import {CallCredentials} from './call-credentials';
+import { ConnectionOptions, createSecureContext, PeerCertificate } from 'tls';
+
+import { CallCredentials } from './call-credentials';
 
 // tslint:disable-next-line:no-any
 function verifyIsBufferOrNull(obj: any, friendlyName: string): void {
@@ -25,8 +42,10 @@ export interface Certificate {
  * indicate that the presented certificate is considered invalid and
  * otherwise returned undefined.
  */
-export type CheckServerIdentityCallback =
-    (hostname: string, cert: Certificate) => Error|undefined;
+export type CheckServerIdentityCallback = (
+  hostname: string,
+  cert: Certificate
+) => Error | undefined;
 
 /**
  * Additional peer verification options that can be set when creating
@@ -71,7 +90,7 @@ export abstract class ChannelCredentials {
    * instance was created with createSsl, or null if this instance was created
    * with createInsecure.
    */
-  abstract _getConnectionOptions(): ConnectionOptions|null;
+  abstract _getConnectionOptions(): ConnectionOptions | null;
 
   /**
    * Indicates whether this credentials object creates a secure channel.
@@ -87,31 +106,37 @@ export abstract class ChannelCredentials {
    * @param certChain The client certificate key chain, if available.
    */
   static createSsl(
-      rootCerts?: Buffer|null, privateKey?: Buffer|null,
-      certChain?: Buffer|null,
-      verifyOptions?: VerifyOptions): ChannelCredentials {
+    rootCerts?: Buffer | null,
+    privateKey?: Buffer | null,
+    certChain?: Buffer | null,
+    verifyOptions?: VerifyOptions
+  ): ChannelCredentials {
     verifyIsBufferOrNull(rootCerts, 'Root certificate');
     verifyIsBufferOrNull(privateKey, 'Private key');
     verifyIsBufferOrNull(certChain, 'Certificate chain');
     if (privateKey && !certChain) {
       throw new Error(
-          'Private key must be given with accompanying certificate chain');
+        'Private key must be given with accompanying certificate chain'
+      );
     }
     if (!privateKey && certChain) {
       throw new Error(
-          'Certificate chain must be given with accompanying private key');
+        'Certificate chain must be given with accompanying private key'
+      );
     }
     const secureContext = createSecureContext({
       ca: rootCerts || undefined,
       key: privateKey || undefined,
-      cert: certChain || undefined
+      cert: certChain || undefined,
     });
-    const connectionOptions: ConnectionOptions = {secureContext};
+    const connectionOptions: ConnectionOptions = { secureContext };
     if (verifyOptions && verifyOptions.checkServerIdentity) {
-      connectionOptions.checkServerIdentity =
-          (host: string, cert: PeerCertificate) => {
-            return verifyOptions.checkServerIdentity!(host, {raw: cert.raw});
-          };
+      connectionOptions.checkServerIdentity = (
+        host: string,
+        cert: PeerCertificate
+      ) => {
+        return verifyOptions.checkServerIdentity!(host, { raw: cert.raw });
+      };
     }
     return new SecureChannelCredentialsImpl(connectionOptions);
   }
@@ -133,7 +158,7 @@ class InsecureChannelCredentialsImpl extends ChannelCredentials {
     throw new Error('Cannot compose insecure credentials');
   }
 
-  _getConnectionOptions(): ConnectionOptions|null {
+  _getConnectionOptions(): ConnectionOptions | null {
     return null;
   }
   _isSecure(): boolean {
@@ -145,19 +170,24 @@ class SecureChannelCredentialsImpl extends ChannelCredentials {
   connectionOptions: ConnectionOptions;
 
   constructor(
-      connectionOptions: ConnectionOptions, callCredentials?: CallCredentials) {
+    connectionOptions: ConnectionOptions,
+    callCredentials?: CallCredentials
+  ) {
     super(callCredentials);
     this.connectionOptions = connectionOptions;
   }
 
   compose(callCredentials: CallCredentials): ChannelCredentials {
-    const combinedCallCredentials =
-        this.callCredentials.compose(callCredentials);
+    const combinedCallCredentials = this.callCredentials.compose(
+      callCredentials
+    );
     return new SecureChannelCredentialsImpl(
-        this.connectionOptions, combinedCallCredentials);
+      this.connectionOptions,
+      combinedCallCredentials
+    );
   }
 
-  _getConnectionOptions(): ConnectionOptions|null {
+  _getConnectionOptions(): ConnectionOptions | null {
     return this.connectionOptions;
   }
   _isSecure(): boolean {

@@ -1,14 +1,35 @@
-import {Call} from './call-stream';
-import {ConnectivityState, Http2Channel} from './channel';
-import {Status} from './constants';
-import {BaseFilter, Filter, FilterFactory} from './filter';
-import {Metadata} from './metadata';
+/*
+ * Copyright 2019 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-const units: Array<[string, number]> =
-    [['m', 1], ['S', 1000], ['M', 60 * 1000], ['H', 60 * 60 * 1000]];
+import { Call } from './call-stream';
+import { ConnectivityState, Http2Channel } from './channel';
+import { Status } from './constants';
+import { BaseFilter, Filter, FilterFactory } from './filter';
+import { Metadata } from './metadata';
+
+const units: Array<[string, number]> = [
+  ['m', 1],
+  ['S', 1000],
+  ['M', 60 * 1000],
+  ['H', 60 * 60 * 1000],
+];
 
 function getDeadline(deadline: number) {
-  const now = (new Date()).getTime();
+  const now = new Date().getTime();
   const timeoutMs = Math.max(deadline - now, 0);
   for (const [unit, factor] of units) {
     const amount = timeoutMs / factor;
@@ -20,11 +41,12 @@ function getDeadline(deadline: number) {
 }
 
 export class DeadlineFilter extends BaseFilter implements Filter {
-  private timer: NodeJS.Timer|null = null;
+  private timer: NodeJS.Timer | null = null;
   private deadline: number;
   constructor(
-      private readonly channel: Http2Channel,
-      private readonly callStream: Call) {
+    private readonly channel: Http2Channel,
+    private readonly callStream: Call
+  ) {
     super();
     const callDeadline = callStream.getDeadline();
     if (callDeadline instanceof Date) {
@@ -32,7 +54,7 @@ export class DeadlineFilter extends BaseFilter implements Filter {
     } else {
       this.deadline = callDeadline;
     }
-    const now: number = (new Date()).getTime();
+    const now: number = new Date().getTime();
     let timeout = this.deadline - now;
     if (timeout < 0) {
       timeout = 0;
@@ -40,7 +62,9 @@ export class DeadlineFilter extends BaseFilter implements Filter {
     if (this.deadline !== Infinity) {
       this.timer = setTimeout(() => {
         callStream.cancelWithStatus(
-            Status.DEADLINE_EXCEEDED, 'Deadline exceeded');
+          Status.DEADLINE_EXCEEDED,
+          'Deadline exceeded'
+        );
       }, timeout);
       callStream.on('status', () => clearTimeout(this.timer as NodeJS.Timer));
     }
@@ -51,32 +75,36 @@ export class DeadlineFilter extends BaseFilter implements Filter {
       return metadata;
     }
     return new Promise<Metadata>((resolve, reject) => {
-             if (this.channel.getConnectivityState(false) ===
-                 ConnectivityState.READY) {
-               resolve(metadata);
-             } else {
-               const handleStateChange = (newState: ConnectivityState) => {
-                 if (newState === ConnectivityState.READY) {
-                   resolve(metadata);
-                   this.channel.removeListener(
-                       'connectivityStateChanged', handleStateChange);
-                   this.callStream.removeListener('status', handleStatus);
-                 }
-               };
-               const handleStatus = () => {
-                 reject(new Error('Call ended'));
-                 this.channel.removeListener(
-                     'connectivityStateChanged', handleStateChange);
-               };
-               this.channel.on('connectivityStateChanged', handleStateChange);
-               this.callStream.once('status', handleStatus);
-             }
-           })
-        .then((finalMetadata: Metadata) => {
-          const timeoutString = getDeadline(this.deadline);
-          finalMetadata.set('grpc-timeout', timeoutString);
-          return finalMetadata;
-        });
+      if (
+        this.channel.getConnectivityState(false) === ConnectivityState.READY
+      ) {
+        resolve(metadata);
+      } else {
+        const handleStateChange = (newState: ConnectivityState) => {
+          if (newState === ConnectivityState.READY) {
+            resolve(metadata);
+            this.channel.removeListener(
+              'connectivityStateChanged',
+              handleStateChange
+            );
+            this.callStream.removeListener('status', handleStatus);
+          }
+        };
+        const handleStatus = () => {
+          reject(new Error('Call ended'));
+          this.channel.removeListener(
+            'connectivityStateChanged',
+            handleStateChange
+          );
+        };
+        this.channel.on('connectivityStateChanged', handleStateChange);
+        this.callStream.once('status', handleStatus);
+      }
+    }).then((finalMetadata: Metadata) => {
+      const timeoutString = getDeadline(this.deadline);
+      finalMetadata.set('grpc-timeout', timeoutString);
+      return finalMetadata;
+    });
   }
 }
 

@@ -19,7 +19,7 @@ Directory: [`packages/grpc-js`](https://github.com/grpc/grpc-node/tree/master/pa
 
 npm package: [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js)
 
-**This library is currently incomplete and experimental, built on the [experimental http2 Node module](https://nodejs.org/api/http2.html).**
+**This library is currently incomplete and experimental. It is built on the [http2 Node module](https://nodejs.org/api/http2.html).**
 
 This library implements the core functionality of gRPC purely in JavaScript, without a C++ addon. It works on the latest version of Node.js on all platforms that Node.js runs on.
 
@@ -35,7 +35,7 @@ This library loads `.proto` files into objects that can be passed to the gRPC li
 
 ### gRPC Tools
 
-Directory: `packages/grpc-tools`
+Directory: [`packages/grpc-tools`](https://github.com/grpc/grpc-node/tree/master/packages/grpc-tools)
 
 npm package: [grpc-tools](https://www.npmjs.com/package/grpc-tools)
 
@@ -43,7 +43,7 @@ Distribution of protoc and the gRPC Node protoc plugin for ease of installation 
 
 ### gRPC Health Check Service
 
-Directory: `packages/grpc-health-check`
+Directory: [`packages/grpc-health-check`](https://github.com/grpc/grpc-node/tree/master/packages/grpc-health-check)
 
 npm package: [grpc-health-check](https://www.npmjs.com/package/grpc-health-check)
 
